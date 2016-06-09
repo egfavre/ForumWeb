@@ -42,10 +42,18 @@ public class Main {
                         subset.add(msg);
                     }
                 }
+
+                Message parentMessage = null;
+                if (replyId >= 0){
+                    parentMessage = messages.get(replyId);
+                }
+
                 HashMap m = new HashMap();
                 m.put("messages", subset);
                 m.put("username", username);
                 m.put("replyId", replyId);
+                m.put("message", parentMessage);
+                m.put("isMe", parentMessage !=null && username !=null && parentMessage.author.equals(username));
                 return  new ModelAndView(m, "home.html");
             },
             new MustacheTemplateEngine()
@@ -99,6 +107,31 @@ public class Main {
                     messages.add(msg);
 
                     response.redirect(request.headers("Referer"));
+                    return "";
+                }
+        );
+
+        Spark.post(
+                "/deleteMessage",
+                (request, response) -> {
+                    int id = Integer.valueOf(request.queryParams("id"));
+                    //protect from deleting other people's messages
+                    Session session = request.session();
+                    String username = session.attribute("username");
+                    Message m = messages.get(id);
+                    if(!m.author.equals(username)){
+                        throw new Exception("you can't delete this");
+                    }
+
+                    messages.remove(id);
+                    //reset id's
+                    int index = 0;
+                    for (Message msg:messages) {
+                        msg.id = index;
+                        index++;
+                    }
+
+                    response.redirect("/");
                     return "";
                 }
         );
