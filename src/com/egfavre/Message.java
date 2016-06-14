@@ -7,6 +7,7 @@ public class Message {
     int id;
     int replyId;
     String author;
+    //in db author column will be user_id
     String text;
 
     public Message(int id, int replyId, String author, String text) {
